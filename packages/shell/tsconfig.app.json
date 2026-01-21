@@ -1,0 +1,7 @@
+{
+  "files": ["src"],
+  "compilerOptions": {
+    "composite": true,
+    "skipLibCheck": true
+  }
+}

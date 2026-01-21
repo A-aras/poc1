@@ -19,7 +19,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
-      "@monorepo/common": ["../common/src"]
+      "@monorepo/common/*": ["../common/src/*"],
+      "@monorepo/common": ["../common/src/index.ts"]
     }
   },
   "include": ["src"]

@@ -15,8 +15,7 @@ import {
   Tab,
   IconButton,
 } from '@mui/material';
-import { useAppSelector, useAppDispatch } from '@monorepo/common';
-import { setSelectedItem } from '@monorepo/common';
+import { useAppSelector, useAppDispatch, setSelectedItem, setActiveTab, removeTab } from '@monorepo/common';
 import * as Icons from '@mui/icons-material';
 import Dashboard from './pages/Dashboard';
 import AppContainer from './components/AppContainer';
@@ -68,7 +67,11 @@ export default function AppLayout() {
   const dispatch = useAppDispatch();
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: string) => {
-    dispatch({ type: 'tabs/setActiveTab', payload: newValue });
+    dispatch(setActiveTab(newValue));
+  };
+
+  const handleCloseTab = (tabId: string) => {
+    dispatch(removeTab(tabId));
   };
 
   const renderContent = () => {
@@ -153,20 +156,21 @@ export default function AppLayout() {
                   key={tab.id}
                   label={tab.label}
                   value={tab.id}
-                  iconPosition="end"
                   icon={
                     !tab.isDashboard ? (
                       <IconButton
                         size="small"
                         onClick={(e) => {
                           e.stopPropagation();
-                          dispatch({ type: 'tabs/removeTab', payload: tab.id });
+                          handleCloseTab(tab.id);
                         }}
+                        sx={{ ml: 1 }}
                       >
                         <Icons.Close fontSize="small" />
                       </IconButton>
                     ) : undefined
                   }
+                  iconPosition="end"
                 />
               ))}
             </Tabs>

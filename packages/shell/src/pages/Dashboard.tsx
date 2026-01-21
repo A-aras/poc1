@@ -2,7 +2,21 @@ import React, { useEffect } from 'react';
 import { Grid, Card, CardActionArea, CardContent, Typography, Box, CircularProgress, Alert } from '@mui/material';
 import { useCardManager, useTabManager } from '@monorepo/common';
 import type { Card as CardType } from '@monorepo/common';
-import axios from 'axios';
+
+// Dynamic Module Federation loader
+const loadRemoteModule = async (scope: string, module: string) => {
+  // Initialize shared scope
+  await __webpack_init_sharing__('default');
+  
+  const container = window[(scope as any)];
+  // Initialize container
+  await container.init(__webpack_share_scopes__.default);
+  const factory = await window[(scope as any)].get(module);
+  return factory();
+};
+
+declare const __webpack_init_sharing__: any;
+declare const __webpack_share_scopes__: any;
 
 const Dashboard: React.FC = () => {
   const { cards, isLoading, error, updateCards, setCardLoading, setCardError } = useCardManager();
@@ -12,11 +26,38 @@ const Dashboard: React.FC = () => {
     const fetchAllCards = async () => {
       setCardLoading(true);
       try {
-        // In a real scenario, you would aggregate cards from multiple micro-apps
-        // For now, we'll simulate this
         const allCards: CardType[] = [];
-        
-        // You can add logic here to fetch from different app endpoints
+
+        // Helper function to load remote cards
+        const loadRemoteCards = async (appName: string, port: number) => {
+          try {
+            // Load remoteEntry.js from remote
+            await new Promise((resolve, reject) => {
+              const script = document.createElement('script');
+              script.src = `http://localhost:${port}/remoteEntry.js`;
+              script.onload = resolve;
+              script.onerror = reject;
+              document.body.appendChild(script);
+            });
+
+            // Load the cards module from remote
+            const module = await loadRemoteModule(appName, './cards');
+            const cardFn = module.default || module[`get${appName.charAt(0).toUpperCase() + appName.slice(1)}Cards`];
+            
+            if (cardFn && typeof cardFn === 'function') {
+              const remoteCards = cardFn();
+              allCards.push(...remoteCards);
+            }
+          } catch (err) {
+            console.warn(`Failed to load ${appName} cards:`, err);
+          }
+        };
+
+        // Load cards from all remote applications
+        await loadRemoteCards('app1', 5174);
+        await loadRemoteCards('app2', 5175);
+        await loadRemoteCards('app3', 5176);
+
         updateCards(allCards);
         setCardError(null);
       } catch (err) {
